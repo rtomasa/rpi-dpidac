@@ -1,0 +1,69 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "brcm,bcm2712";
+
+	fragment@0 {
+		target-path = "/";
+		__overlay__ {
+			dpidac_bridge: bridge {
+				compatible = "raspberrypi,dpidac";
+				/* optional properties read by the driver */
+				raspberrypi,preferred-mode = "1080p60"; /* default, can be overridden */
+				/* raspberrypi,bus-format and bus-flags may be set by overrides below */
+
+				port {
+					dpidac_in: endpoint {
+						remote-endpoint = <&rp1_dpi_out>;
+					};
+				};
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&rp1_dpi>;
+		__overlay__  {
+			status = "okay";
+			pinctrl-names = "default";
+			pinctrl-0 = <&dpi_pins>;
+
+			port {
+				rp1_dpi_out: endpoint {
+					remote-endpoint = <&dpidac_in>;
+				};
+			};
+		};
+	};
+
+	fragment@2 {
+		target = <&gpio>;
+		__overlay__ {
+			dpi_pins: dpi_pins {
+				function = "dpi";
+				brcm,pins = <0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27>;
+				brcm,function = <6>;
+				brcm,pull = <0>;
+			};
+		};
+	};
+
+	__overrides__ {
+		bus-format = <&dpidac_bridge>, "raspberrypi,bus-format:0";
+		bus-flags  = <&dpidac_bridge>, "bus-flags:0";
+		rgb_order  = <&rp1_dpi>,       "rgb_order";
+
+		/* convenience aliases for MEDIA_BUS_FMT_* */
+		rgb565        = <&dpidac_bridge>, "raspberrypi,bus-format:0=0x1017";
+		rgb565-padhi  = <&dpidac_bridge>, "raspberrypi,bus-format:0=0x1022";
+		bgr666        = <&dpidac_bridge>, "raspberrypi,bus-format:0=0x1023";
+		bgr666-padhi  = <&dpidac_bridge>, "raspberrypi,bus-format:0=0x1024";
+		rgb666-padhi  = <&dpidac_bridge>, "raspberrypi,bus-format:0=0x1015";
+		bgr888        = <&dpidac_bridge>, "raspberrypi,bus-format:0=0x1013";
+		rgb888        = <&dpidac_bridge>, "raspberrypi,bus-format:0=0x100a";
+
+		/* preferred mode selector, accept strings like 1080p60/1080p50/720p60/720p50 */
+		mode          = <&dpidac_bridge>, "raspberrypi,preferred-mode;str";
+	};
+};
